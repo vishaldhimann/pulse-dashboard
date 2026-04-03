@@ -3,8 +3,10 @@
 #   - Web App (Linux, Node 20), same resource group as Cosmos
 #   - Configuration → Application settings: MONGODB_URI, (optional) AZURE_OPENAI_*
 #   - General settings → Web sockets: On
-#   - General settings → Startup command:
-#       cd /home/site/wwwroot/backend && npm install --production && npm start
+#   - General settings → Startup command (pick one):
+#       • Workflow pulse-project_backend-pulse-api.yml (deploys backend/ as wwwroot): npm start
+#       • This workflow with package: . (whole repo on wwwroot):
+#           cd /home/site/wwwroot/backend && npm install --production && npm start
 # GitHub repo secrets:
 #   - AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND = contents of Download publish profile (.xml)
 # GitHub repo variables (Settings → Secrets and variables → Actions → Variables):
