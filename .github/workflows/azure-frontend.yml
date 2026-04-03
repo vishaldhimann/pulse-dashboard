@@ -4,14 +4,14 @@
 #   - Or add secret manually: Portal → SWA → Manage deployment token
 # GitHub repo secrets:
 #   - AZURE_STATIC_WEB_APPS_API_TOKEN = deployment token from Azure SWA
-# Optional repo variable (overrides placeholder in environment.prod.ts before build):
+# Optional repo variable (overrides committed API URL in environment.prod.ts before build):
 #   - PULSE_API_BASE_URL = https://your-backend.azurewebsites.net  (no trailing slash)
 
 name: Deploy frontend (Azure Static Web Apps)
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, pulse-project]
     paths:
       - 'frontend/**'
       - '.github/workflows/azure-frontend.yml'
@@ -19,17 +19,33 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Point dashboard at production API (optional)
         env:
           API_URL: ${{ vars.PULSE_API_BASE_URL }}
+          DEFAULT_API: https://backend-pulse-api-dvhmhvgqatfggrex.centralindia-01.azurewebsites.net
         working-directory: frontend
         run: |
           if [ -n "$API_URL" ]; then
-            sed -i.bak "s|https://YOUR-PULSE-API.azurewebsites.net|${API_URL}|g" src/environments/environment.prod.ts
+            API_URL="${API_URL%/}"
+            sed -i.bak "s|${DEFAULT_API}|${API_URL}|g" src/environments/environment.prod.ts
           fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install and build
+        working-directory: frontend
+        run: npm ci && npm run build
 
       - name: Build and deploy
         uses: Azure/static-web-apps-deploy@v1
@@ -37,7 +53,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: /frontend
+          app_location: frontend/dist/pulse-dashboard/browser
           api_location: ''
-          output_location: dist/pulse-dashboard/browser
-          app_build_command: npm ci && npm run build
+          output_location: ''
+          skip_app_build: true
