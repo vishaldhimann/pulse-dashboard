@@ -1,0 +1,7 @@
+{
+  "name": "@pulse/sdk",
+  "version": "1.0.0",
+  "description": "Pulse SDK — Lightweight federated telemetry for any app",
+  "main": "src/index.js",
+  "files": ["src/"]
+}

@@ -1,0 +1,43 @@
+# Deploy Angular dashboard to Azure Static Web Apps (second URL).
+# Prereqs in Azure:
+#   - Create Static Web App → link this GitHub repo/branch
+#   - Or add secret manually: Portal → SWA → Manage deployment token
+# GitHub repo secrets:
+#   - AZURE_STATIC_WEB_APPS_API_TOKEN = deployment token from Azure SWA
+# Optional repo variable (overrides placeholder in environment.prod.ts before build):
+#   - PULSE_API_BASE_URL = https://your-backend.azurewebsites.net  (no trailing slash)
+
+name: Deploy frontend (Azure Static Web Apps)
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/azure-frontend.yml'
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Point dashboard at production API (optional)
+        env:
+          API_URL: ${{ vars.PULSE_API_BASE_URL }}
+        working-directory: frontend
+        run: |
+          if [ -n "$API_URL" ]; then
+            sed -i.bak "s|https://YOUR-PULSE-API.azurewebsites.net|${API_URL}|g" src/environments/environment.prod.ts
+          fi
+
+      - name: Build and deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: /frontend
+          api_location: ''
+          output_location: dist/pulse-dashboard/browser
+          app_build_command: npm ci && npm run build
