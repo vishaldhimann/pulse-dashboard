@@ -1,6 +1,9 @@
 {
   "name": "pulse-dashboard",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve --port 4300",

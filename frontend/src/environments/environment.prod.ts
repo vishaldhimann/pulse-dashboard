@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
-  /** Replace with your Azure Web App URL after deploy (HTTPS, no trailing slash). */
-  apiBaseUrl: 'https://YOUR-PULSE-API.azurewebsites.net',
+  /** Backend origin only — no trailing slash (serves /api/* and Socket.io). */
+  apiBaseUrl:
+    'https://backend-pulse-api-dvhmhvgqatfggrex.centralindia-01.azurewebsites.net',
 };

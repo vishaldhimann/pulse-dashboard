@@ -14,7 +14,7 @@ name: Deploy backend (Azure App Service)
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, pulse-project]
     paths:
       - 'backend/**'
       - 'sdk/**'
@@ -23,8 +23,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
