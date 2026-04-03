@@ -4,6 +4,9 @@
 # Azure App Service → Configuration → General settings → Startup command:
 #   npm start
 # (Do not use wwwroot/backend — this workflow deploys the backend folder as the site root.)
+#
+# App Service “Stack” Node version (e.g. 22 LTS): runtime for your app. Keep 22 — it matches CI.
+# The GitHub warnings are about the *action* runtime, not this setting.
 
 name: Build and deploy Node.js app to Azure Web App - backend-pulse-api
 
@@ -26,7 +29,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22.x'
           cache: npm
@@ -45,7 +48,7 @@ jobs:
           npm run test --if-present
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: node-app
           path: backend
@@ -58,11 +61,12 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
+      # Extract artifact to workspace root so package.json sits at $GITHUB_WORKSPACE/
+      # (webapps-deploy treats `package: app` like a glob — "No package found pattern: app")
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: node-app
-          path: app
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -77,4 +81,4 @@ jobs:
         with:
           app-name: 'backend-pulse-api'
           slot-name: 'Production'
-          package: app
+          package: .
