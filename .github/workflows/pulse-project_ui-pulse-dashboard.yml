@@ -8,7 +8,7 @@
 # Azure (after first deploy):
 #   Configuration → General settings → Stack: Node 22 LTS
 #   Startup command: npm start
-#   (see frontend/hosting/azure-app-service-static.cjs + wwwroot/)
+#   (see frontend/hosting/azure-app-service-static.cjs + public/)
 
 name: Build and deploy frontend to Azure Web App - ui-pulse-dashboard
 
@@ -56,8 +56,8 @@ jobs:
 
       - name: Package static site + static server for App Service
         run: |
-          mkdir -p release/wwwroot
-          cp -r frontend/dist/pulse-dashboard/browser/* release/wwwroot/
+          mkdir -p release/public
+          cp -r frontend/dist/pulse-dashboard/browser/* release/public/
           cp frontend/hosting/azure-app-service-static.cjs release/server.js
           cat > release/package.json << 'EOF'
           {
@@ -68,7 +68,7 @@ jobs:
               "start": "node server.js"
             },
             "dependencies": {
-              "serve-handler": "^2.3.0"
+              "express": "^4.21.0"
             }
           }
           EOF
