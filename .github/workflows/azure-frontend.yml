@@ -37,7 +37,7 @@ jobs:
             sed -i.bak "s|${DEFAULT_API}|${API_URL}|g" src/environments/environment.prod.ts
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
