@@ -1,0 +1,104 @@
+# Build Angular app and deploy to Azure App Service (Linux, Node).
+# Same branch as backend (pulse-project). Uses the same Entra app + secrets as
+# pulse-project_backend-pulse-api.yml if OIDC is already working for the repo.
+#
+# If `azure/login` fails with AAD errors, add a Federated credential on the app
+# registration for this repo/branch, or deploy using a publish profile instead.
+#
+# Azure (after first deploy):
+#   Configuration → General settings → Stack: Node 22 LTS
+#   Startup command: npm start
+#   (This package serves prebuilt static files with `serve`.)
+
+name: Build and deploy frontend to Azure Web App - ui-pulse-dashboard
+
+on:
+  push:
+    branches:
+      - pulse-project
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/pulse-project_ui-pulse-dashboard.yml'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Point dashboard at production API (optional)
+        env:
+          API_URL: ${{ vars.PULSE_API_BASE_URL }}
+          DEFAULT_API: https://backend-pulse-api-dvhmhvgqatfggrex.centralindia-01.azurewebsites.net
+        working-directory: frontend
+        run: |
+          if [ -n "$API_URL" ]; then
+            API_URL="${API_URL%/}"
+            sed -i.bak "s|${DEFAULT_API}|${API_URL}|g" src/environments/environment.prod.ts
+          fi
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22.x'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build Angular (production)
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      - name: Package static site + static server for App Service
+        run: |
+          mkdir -p release/wwwroot
+          cp -r frontend/dist/pulse-dashboard/browser/* release/wwwroot/
+          cat > release/package.json << 'EOF'
+          {
+            "name": "pulse-ui-host",
+            "private": true,
+            "engines": { "node": ">=20" },
+            "scripts": {
+              "start": "serve -s wwwroot -l tcp://0.0.0.0:${PORT:-8080}"
+            },
+            "dependencies": {
+              "serve": "^14.2.4"
+            }
+          }
+          EOF
+          cd release && npm install --omit=dev
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ui-app
+          path: release
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: ui-app
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1ADD326F938C4F8EA13E833C90278973 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_02DD0DFD2E444F79930376F25A16B1DD }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_266066E284FB4D19A4607BF5885717BB }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ui-pulse-dashboard
+          slot-name: Production
+          package: .
