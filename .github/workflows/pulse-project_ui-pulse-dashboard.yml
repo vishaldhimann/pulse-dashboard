@@ -1,6 +1,6 @@
 # Build Angular app and deploy to Azure App Service (Linux, Node).
-# Same branch as backend (pulse-project). Uses the same Entra app + secrets as
-# pulse-project_backend-pulse-api.yml if OIDC is already working for the repo.
+# Same branch as backend (pulse-project). OIDC secrets come from Azure
+# Deployment Center for ui-pulse-dashboard (or replace with your app registration).
 #
 # If `azure/login` fails with AAD errors, add a Federated credential on the app
 # registration for this repo/branch, or deploy using a publish profile instead.
@@ -92,9 +92,9 @@ jobs:
 
       - uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1ADD326F938C4F8EA13E833C90278973 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_02DD0DFD2E444F79930376F25A16B1DD }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_266066E284FB4D19A4607BF5885717BB }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_EBBB67E540DB47D4AA6242E9D0D02F1B }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B6C4D2E97DD74718B9BF3C07FEAB4948 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_8533BE5FD22B49A3BD4736775ACB2A6C }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
