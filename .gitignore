@@ -11,6 +11,9 @@ node_modules/
 frontend/dist/
 frontend/.angular/
 
+# Backend — SDK copy for local App Service parity (CI also generates this)
+backend/public/pulse.min.js
+
 # Logs & debug
 logs/
 *.log

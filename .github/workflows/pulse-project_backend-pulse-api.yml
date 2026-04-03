@@ -1,5 +1,9 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
+#
+# Azure App Service → Configuration → General settings → Startup command:
+#   npm start
+# (Do not use wwwroot/backend — this workflow deploys the backend folder as the site root.)
 
 name: Build and deploy Node.js app to Azure Web App - backend-pulse-api
 
@@ -9,6 +13,9 @@ on:
       - pulse-project
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,16 +23,24 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
 
-      - name: npm install, build, and test
+      - name: Include SDK in backend (deploy is backend/ only; no ../sdk on App Service)
         run: |
-          npm install
+          mkdir -p backend/public
+          cp sdk/dist/pulse.min.js backend/public/pulse.min.js
+
+      - name: npm ci, build, and test (backend)
+        working-directory: backend
+        run: |
+          npm ci --omit=dev
           npm run build --if-present
           npm run test --if-present
 
@@ -33,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: backend
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,5 +76,4 @@ jobs:
         with:
           app-name: 'backend-pulse-api'
           slot-name: 'Production'
-          package: .
-          
+          package: app
