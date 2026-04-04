@@ -40,7 +40,8 @@ router.post('/ingest', async (req, res) => {
         instanceId: instance.instanceId,
         globalClientId: instance.instanceId,
         hashedUserId: e.hashedUserId || 'anonymous',
-        featureName: e.featureName,
+        // Schema requires featureName; custom clients must send it or we default
+        featureName: e.featureName || 'unknown',
         eventType: e.eventType || 'interaction',
         sessionDuration: e.sessionDuration || 0,
         metadata: e.metadata || {},

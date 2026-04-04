@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -50,15 +52,20 @@ app.use('/api/ai', aiRoutes);
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'alive', ts: Date.now() }));
  
-// Serve SDK file — any app can load this via script tag
-const path = require('path');
+// Serve SDK — App Service deploy uses backend/public (CI copy); local dev uses monorepo sdk/dist
 app.get('/pulse.min.js', (req, res) => {
+  const bundled = path.join(__dirname, '../public/pulse.min.js');
+  const monorepo = path.resolve(__dirname, '../../sdk/dist/pulse.min.js');
+  const file = fs.existsSync(bundled) ? bundled : monorepo;
+  if (!fs.existsSync(file)) {
+    return res.status(404).type('text/plain').send('pulse.min.js not found (run sdk build / deploy)');
+  }
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  res.sendFile(path.resolve(__dirname, '../../sdk/dist/pulse.min.js'));
+  res.sendFile(file);
 });
  
 // Socket.io
