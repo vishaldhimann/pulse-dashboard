@@ -39,4 +39,7 @@ export class ApiService {
   getErrors(hours = 24): Observable<any> { return this.http.get(`${BASE}/observability/errors?hours=${hours}`); }
   getErrorTimeline(hours = 24): Observable<any> { return this.http.get(`${BASE}/observability/error-timeline?hours=${hours}`); }
   getErrorsByInstance(hours = 24): Observable<any> { return this.http.get(`${BASE}/observability/errors-by-instance?hours=${hours}`); }
+
+  // AI
+  askPulse(question: string): Observable<any> { return this.http.post(`${BASE}/ai/chat`, { question }); }
 }

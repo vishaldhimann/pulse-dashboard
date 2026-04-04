@@ -9,7 +9,7 @@ async function gatherContext() {
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [summary, topFeatures, instances, recentAlerts, errorCount] = await Promise.all([
+  const [summary, topFeatures, instances, recentAlerts, errorCount, pageTimeStats, userStats, recentRouteChanges] = await Promise.all([
     Event.aggregate([
       { $facet: {
         total: [{ $count: 'n' }],
@@ -24,7 +24,25 @@ async function gatherContext() {
     ]),
     Instance.find({ isActive: true }).lean(),
     Alert.find({ isResolved: false }).sort({ createdAt: -1 }).limit(10).lean(),
-    Event.countDocuments({ eventType: { $in: ['error', 'api_error'] }, timestamp: { $gte: dayAgo } })
+    Event.countDocuments({ eventType: { $in: ['error', 'api_error'] }, timestamp: { $gte: dayAgo } }),
+    // Page time stats
+    Event.aggregate([
+      { $match: { eventType: 'page_time', timestamp: { $gte: weekAgo } } },
+      { $group: { _id: '$metadata.route', totalTime: { $sum: '$metadata.timeSpentSeconds' }, visits: { $sum: 1 }, avgTime: { $avg: '$metadata.timeSpentSeconds' } } },
+      { $sort: { totalTime: -1 } }, { $limit: 10 }
+    ]),
+    // User stats
+    Event.aggregate([
+      { $match: { timestamp: { $gte: weekAgo }, 'metadata._ctx.firstName': { $exists: true } } },
+      { $group: { _id: '$metadata._ctx.userId', firstName: { $first: '$metadata._ctx.firstName' }, lastName: { $first: '$metadata._ctx.lastName' }, appId: { $first: '$metadata._ctx.appId' }, businessName: { $first: '$metadata._ctx.businessName' }, events: { $sum: 1 } } },
+      { $sort: { events: -1 } }, { $limit: 10 }
+    ]),
+    // Recent route changes
+    Event.aggregate([
+      { $match: { eventType: 'route_change', timestamp: { $gte: dayAgo } } },
+      { $group: { _id: { from: '$metadata.fromRoute', to: '$metadata.toRoute' }, count: { $sum: 1 }, avgTime: { $avg: '$metadata.timeOnPreviousRouteSeconds' } } },
+      { $sort: { count: -1 } }, { $limit: 10 }
+    ])
   ]);
 
   return {
@@ -32,9 +50,12 @@ async function gatherContext() {
     todayEvents: summary[0]?.today[0]?.n || 0,
     weekEvents: summary[0]?.week[0]?.n || 0,
     topFeatures: topFeatures.map(f => ({ feature: f._id, count: f.count })),
-    instances: instances.map(i => ({ name: i.name, region: i.region, tier: i.clientTier, status: i.status, lastHeartbeat: i.lastHeartbeat })),
-    activeAlerts: recentAlerts.map(a => ({ type: a.alertType, severity: a.severity, message: a.message, instance: a.instanceId })),
-    errorsToday: errorCount
+    instances: instances.map(i => ({ name: i.name, region: i.region, tier: i.clientTier, status: i.status })),
+    activeAlerts: recentAlerts.map(a => ({ type: a.alertType, severity: a.severity, message: a.message })),
+    errorsToday: errorCount,
+    pageTimeStats: pageTimeStats.map(p => ({ route: p._id, totalTimeSeconds: Math.round(p.totalTime), visits: p.visits, avgTimeSeconds: Math.round(p.avgTime) })),
+    users: userStats.map(u => ({ name: (u.firstName || '') + ' ' + (u.lastName || ''), businessName: u.businessName, appId: u.appId, events: u.events })),
+    topRouteTransitions: recentRouteChanges.map(r => ({ from: r._id.from, to: r._id.to, count: r.count, avgTimeOnPreviousPage: Math.round(r.avgTime) }))
   };
 }
 
@@ -45,30 +66,39 @@ async function callAzureOpenAI(systemPrompt, userMessage) {
   const deployment = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o-mini';
 
   if (!endpoint || !key) {
-    // Mock response for demo when Azure is not configured
-    return `[AI Demo Mode] Based on the analytics data provided, here are the key insights:\n\n` +
-      `1. The platform shows healthy engagement across most instances.\n` +
-      `2. Feature adoption varies significantly between enterprise and standard tier clients.\n` +
-      `3. Instances with declining activity should be flagged for customer success outreach.\n\n` +
-      `Note: Connect Azure OpenAI for production-quality insights.`;
+    return `[AI Demo Mode] Connect Azure OpenAI for production-quality insights.`;
   }
 
-  const url = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-01`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'api-key': key },
-    body: JSON.stringify({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-      ],
-      temperature: 0.3,
-      max_tokens: 1000
-    })
-  });
+  try {
+    const url = `${endpoint.replace(/\/$/, '')}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-01`;
+    console.log('[AI] Calling:', url);
 
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || 'No response from AI';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'api-key': key },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 1,
+        max_completion_tokens: 1000
+      })
+    });
+
+    const data = await response.json();
+    console.log('[AI] Status:', response.status, 'Response keys:', Object.keys(data));
+
+    if (data.error) {
+      console.error('[AI] Error:', JSON.stringify(data.error));
+      return `AI Error: ${data.error.message || JSON.stringify(data.error)}`;
+    }
+
+    return data.choices?.[0]?.message?.content || 'No response from AI. Raw: ' + JSON.stringify(data).substring(0, 200);
+  } catch (err) {
+    console.error('[AI] Fetch error:', err.message);
+    return `AI connection error: ${err.message}`;
+  }
 }
 
 // POST /insights — auto-generate insights
