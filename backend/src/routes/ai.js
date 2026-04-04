@@ -121,12 +121,26 @@ router.post('/chat', async (req, res) => {
     const { question } = req.body;
     if (!question) return res.status(400).json({ error: 'question required' });
 
-    const context = await gatherContext();
-    const systemPrompt = `You are "Pulse AI", an analytics assistant for a federated SaaS lending platform.
-You have access to cross-instance telemetry data. Answer questions about feature usage, instance health, 
-churn risk, errors, and business metrics. Be concise and data-driven. If you don't have enough data, say so.`;
+    // Only gather heavy analytics context if the question is about data
+    const dataKeywords = ['page', 'time', 'user', 'error', 'api', 'route', 'session', 'event', 'click', 'activity', 'slow', 'fast', 'most', 'least', 'average', 'total', 'count', 'how many', 'which', 'what is', 'summarize', 'summary', 'report', 'analytics', 'data', 'metric', 'stat', 'performance', 'duration', 'spent', 'visit', 'traffic', 'trend', 'rate', 'instance', 'application', 'loan', 'business'];
+    const isDataQuestion = dataKeywords.some(k => question.toLowerCase().includes(k));
 
-    const userMessage = `Analytics context:\n${JSON.stringify(context, null, 2)}\n\nUser question: ${question}`;
+    let contextBlock = '';
+    if (isDataQuestion) {
+      const context = await gatherContext();
+      contextBlock = `\n\nHere is the current analytics data you can reference:\n${JSON.stringify(context, null, 2)}`;
+    }
+
+    const systemPrompt = `You are "Pulse AI", a friendly and helpful analytics assistant.
+
+RULES:
+- For casual messages like "hi", "hello", "thanks", etc — reply naturally and briefly like a human would. Do NOT dump analytics data.
+- Only reference analytics data when the user specifically asks about metrics, pages, users, errors, performance, etc.
+- When answering data questions, be concise and cite specific numbers.
+- Do not volunteer extra analysis unless asked. Answer exactly what was asked, nothing more.
+- Keep responses short and to the point.`;
+
+    const userMessage = question + contextBlock;
     const answer = await callAzureOpenAI(systemPrompt, userMessage);
     res.json({ question, answer, generatedAt: new Date() });
   } catch (err) { res.status(500).json({ error: err.message }); }
