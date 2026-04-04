@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { Chart, registerables } from 'chart.js';
-import Highcharts from 'highcharts/highcharts.src.js';
+import * as Highcharts from 'highcharts';
 
 Chart.register(...registerables);
 
