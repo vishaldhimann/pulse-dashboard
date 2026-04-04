@@ -284,8 +284,8 @@ export class RouteAnalyticsComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         indexAxis: 'y',
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } },
-          y: { grid: { display: false }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } }
+          x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
+          y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
         plugins: { legend: { display: false } }
       }
@@ -317,8 +317,8 @@ export class RouteAnalyticsComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         indexAxis: 'y',
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } },
-          y: { grid: { display: false }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } }
+          x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
+          y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
         plugins: { legend: { display: false } }
       }
@@ -326,3 +326,5 @@ export class RouteAnalyticsComponent implements OnInit, OnDestroy {
     this.charts.push(chart);
   }
 }
+
+

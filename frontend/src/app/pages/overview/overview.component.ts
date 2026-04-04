@@ -90,7 +90,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
           type: 'doughnut',
           data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 0, hoverOffset: 6 }] },
           options: { responsive: true, maintainAspectRatio: false, cutout: '62%',
-            plugins: { legend: { position: 'right', labels: { color: '#6b7280', font: { family: 'Inter', size: 11 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } } } }
+            plugins: { legend: { position: 'right', labels: { color: '#111827', font: { family: 'Inter', size: 13 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } } } }
         }));
       }, 100),
       error: () => {}
@@ -111,8 +111,8 @@ export class OverviewComponent implements OnInit, OnDestroy {
               backgroundColor: 'rgba(79,70,229,0.15)', borderColor: '#4f46e5', borderWidth: 1, borderRadius: 4, barPercentage: 0.7 }]
           },
           options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-            scales: { x: { grid: { color: '#f3f4f6' }, ticks: { color: '#6b7280', font: { family: 'Inter', size: 10 } } },
-                      y: { grid: { display: false }, ticks: { color: '#6b7280', font: { family: 'Inter', size: 10 } } } },
+            scales: { x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
+                      y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } } },
             plugins: { legend: { display: false } } }
         }));
       }, 150),
@@ -137,13 +137,13 @@ export class OverviewComponent implements OnInit, OnDestroy {
             categories,
             lineColor: '#e5e7eb',
             tickLength: 0,
-            labels: { style: { color: '#6b7280', fontSize: '10px' }, step: labelStep }
+            labels: { style: { color: '#111827', fontSize: '10px' }, step: labelStep }
           },
           yAxis: {
             min: 0,
             title: { text: undefined },
             gridLineColor: '#f3f4f6',
-            labels: { style: { color: '#6b7280', fontSize: '10px' } }
+            labels: { style: { color: '#111827', fontSize: '10px' } }
           },
           legend: { enabled: false },
           tooltip: {
@@ -184,8 +184,8 @@ export class OverviewComponent implements OnInit, OnDestroy {
               backgroundColor: palette.slice(0, top.length), borderWidth: 0, borderRadius: 4, barPercentage: 0.65 }]
           },
           options: { responsive: true, maintainAspectRatio: false,
-            scales: { x: { grid: { display: false }, ticks: { color: '#6b7280', font: { family: 'Inter', size: 10 }, maxRotation: 45 } },
-                      y: { grid: { color: '#f3f4f6' }, ticks: { color: '#6b7280', font: { family: 'Inter', size: 10 } }, beginAtZero: true } },
+            scales: { x: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 }, maxRotation: 45 } },
+                      y: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } }, beginAtZero: true } },
             plugins: { legend: { display: false } } }
         }));
       }, 250),
@@ -205,3 +205,4 @@ export class OverviewComponent implements OnInit, OnDestroy {
     return String(n);
   }
 }
+

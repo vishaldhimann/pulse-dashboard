@@ -163,7 +163,7 @@ interface ErrorGroup {
       line-height: 1.5;
     }
     .error-group-row__meta {
-      font-size: 11px;
+      font-size: 13px;
       color: var(--text-muted);
       margin-top: 4px;
       display: flex;
@@ -348,8 +348,8 @@ export class ErrorsComponent implements OnInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } }, beginAtZero: true }
+          x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
+          y: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } }, beginAtZero: true }
         },
         plugins: { legend: { display: false } }
       }
@@ -397,8 +397,8 @@ export class ErrorsComponent implements OnInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } }, beginAtZero: true }
+          x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
+          y: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } }, beginAtZero: true }
         },
         plugins: { legend: { display: false } }
       }
@@ -437,8 +437,8 @@ export class ErrorsComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         indexAxis: 'y',
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } },
-          y: { grid: { display: false }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } }
+          x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
+          y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
         plugins: { legend: { display: false } }
       }
@@ -477,8 +477,8 @@ export class ErrorsComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         indexAxis: 'y',
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } },
-          y: { grid: { display: false }, ticks: { color: '#8b8ba3', font: { family: 'Inter', size: 10 } } }
+          x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
+          y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
         plugins: { legend: { display: false } }
       }
@@ -507,10 +507,12 @@ export class ErrorsComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         cutout: '60%',
         plugins: {
-          legend: { position: 'right', labels: { color: '#8b8ba3', font: { family: 'Inter', size: 10 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } }
+          legend: { position: 'right', labels: { color: '#111827', font: { family: 'Inter', size: 13 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } }
         }
       }
     });
     this.charts.push(chart);
   }
 }
+
+
