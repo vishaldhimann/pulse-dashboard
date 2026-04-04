@@ -6,6 +6,67 @@ import * as Highcharts from 'highcharts';
 
 Chart.register(...registerables);
 
+/* ── Custom plugin: show native tooltip on axis-label hover ── */
+const labelTooltipPlugin = {
+  id: 'labelTooltip',
+  _tip: null as HTMLDivElement | null,
+  _getTip(): HTMLDivElement {
+    if (!(this as any)._tip) {
+      const d = document.createElement('div');
+      Object.assign(d.style, {
+        position: 'fixed', padding: '6px 12px', background: '#1f2937', color: '#fff',
+        fontSize: '12px', borderRadius: '6px', pointerEvents: 'none', zIndex: '9999',
+        whiteSpace: 'nowrap', opacity: '0', transition: 'opacity 0.15s', fontFamily: 'Inter, system-ui, sans-serif',
+        maxWidth: '420px', overflow: 'hidden', textOverflow: 'ellipsis', boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+      });
+      document.body.appendChild(d);
+      (this as any)._tip = d;
+    }
+    return (this as any)._tip;
+  },
+  afterEvent(chart: any, args: any) {
+    const evt = args.event;
+    if (evt.type !== 'mousemove' && evt.type !== 'mouseout') return;
+    const tip = (labelTooltipPlugin as any)._getTip();
+    if (evt.type === 'mouseout') { tip.style.opacity = '0'; return; }
+
+    const fullLabels = (chart as any).__fullLabels;
+    if (!fullLabels) { tip.style.opacity = '0'; return; }
+
+    // Check each scale for label hit
+    for (const scaleId of Object.keys(chart.scales)) {
+      const scale = chart.scales[scaleId];
+      if (!scale || !scale._labelItems) continue;
+      for (let i = 0; i < scale._labelItems.length; i++) {
+        const item = scale._labelItems[i];
+        const lbl = fullLabels[i];
+        if (!lbl) continue;
+        // Build a hit box around the label
+        const font = item.font || {};
+        const sz = font.size || 13;
+        let hitX: number, hitY: number, hitW: number, hitH: number;
+        if (scale.isHorizontal()) {
+          hitW = 80; hitH = sz + 8;
+          hitX = item.x - hitW / 2; hitY = item.y - 2;
+        } else {
+          hitW = scale.width || 120; hitH = sz + 8;
+          hitX = scale.left; hitY = item.y - hitH / 2;
+        }
+        if (evt.x >= hitX && evt.x <= hitX + hitW && evt.y >= hitY && evt.y <= hitY + hitH) {
+          tip.textContent = lbl;
+          const rect = chart.canvas.getBoundingClientRect();
+          tip.style.left = (rect.left + evt.x + 12) + 'px';
+          tip.style.top = (rect.top + evt.y - 28) + 'px';
+          tip.style.opacity = '1';
+          return;
+        }
+      }
+    }
+    tip.style.opacity = '0';
+  }
+};
+Chart.register(labelTooltipPlugin as any);
+
 @Component({
   selector: 'pulse-overview',
   standalone: true,
@@ -86,12 +147,14 @@ export class OverviewComponent implements OnInit, OnDestroy {
         const values = Object.values(data) as number[];
         if (!labels.length) return;
         const colors = ['#4f46e5','#7c3aed','#db2777','#059669','#2563eb','#d97706','#dc2626','#0891b2'];
-        this.charts.push(new Chart(this.eventTypeRef.nativeElement, {
+        const ec = new Chart(this.eventTypeRef.nativeElement, {
           type: 'doughnut',
           data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 0, hoverOffset: 6 }] },
           options: { responsive: true, maintainAspectRatio: false, cutout: '62%',
             plugins: { legend: { position: 'right', labels: { color: '#111827', font: { family: 'Inter', size: 13 }, padding: 10, usePointStyle: true, pointStyleWidth: 8 } } } }
-        }));
+        });
+        (ec as any).__fullLabels = labels;
+        this.charts.push(ec);
       }, 100),
       error: () => {}
     });
@@ -103,18 +166,23 @@ export class OverviewComponent implements OnInit, OnDestroy {
         const items = Array.isArray(data) ? data : [];
         const sorted = items.sort((a: any, b: any) => (b.totalTimeSeconds || 0) - (a.totalTimeSeconds || 0)).slice(0, 10);
         if (!sorted.length) return;
-        this.charts.push(new Chart(this.pageTimeRef.nativeElement, {
+        const fullRoutes = sorted.map((p: any) => p.route || '');
+        const shortLabels = fullRoutes.map((r: string) => { const s = r.replace(/^\/business-loans\//, '/'); return s.length > 18 ? '...' + s.slice(-15) : s; });
+        const c = new Chart(this.pageTimeRef.nativeElement, {
           type: 'bar',
           data: {
-            labels: sorted.map((p: any) => { const r = p.route || ''; return r.length > 28 ? '...' + r.slice(-25) : r; }),
+            labels: shortLabels,
             datasets: [{ label: 'Time (s)', data: sorted.map((p: any) => Math.round(p.totalTimeSeconds || 0)),
               backgroundColor: 'rgba(79,70,229,0.15)', borderColor: '#4f46e5', borderWidth: 1, borderRadius: 4, barPercentage: 0.7 }]
           },
           options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
             scales: { x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
                       y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } } },
-            plugins: { legend: { display: false } } }
-        }));
+            plugins: { legend: { display: false },
+              tooltip: { callbacks: { title: (items: any) => { const i = items[0]?.dataIndex; return i != null ? fullRoutes[i] : ''; } } } } }
+        });
+        (c as any).__fullLabels = fullRoutes;
+        this.charts.push(c);
       }, 150),
       error: () => {}
     });
@@ -176,10 +244,11 @@ export class OverviewComponent implements OnInit, OnDestroy {
         const top = items.slice(0, 8);
         if (!top.length) return;
         const palette = ['#4f46e5','#7c3aed','#db2777','#059669','#2563eb','#d97706','#0891b2','#be185d'];
-        this.charts.push(new Chart(this.featuresRef.nativeElement, {
+        const featureLabels = top.map((f: any) => f.featureName || '');
+        const fc = new Chart(this.featuresRef.nativeElement, {
           type: 'bar',
           data: {
-            labels: top.map((f: any) => f.featureName || ''),
+            labels: featureLabels,
             datasets: [{ label: 'Events', data: top.map((f: any) => f.count || 0),
               backgroundColor: palette.slice(0, top.length), borderWidth: 0, borderRadius: 4, barPercentage: 0.65 }]
           },
@@ -187,7 +256,9 @@ export class OverviewComponent implements OnInit, OnDestroy {
             scales: { x: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 }, maxRotation: 45 } },
                       y: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } }, beginAtZero: true } },
             plugins: { legend: { display: false } } }
-        }));
+        });
+        (fc as any).__fullLabels = featureLabels;
+        this.charts.push(fc);
       }, 250),
       error: () => {}
     });
@@ -196,6 +267,8 @@ export class OverviewComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.charts.forEach(c => c.destroy());
     this.dauHighchart?.destroy();
+    const tip = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
+    if (tip) tip.remove();
   }
 
   formatNum(n: any): string {

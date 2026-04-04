@@ -265,10 +265,11 @@ export class RouteAnalyticsComponent implements OnInit, OnDestroy {
   private buildTimeChart(): void {
     if (!this.timeChartRef?.nativeElement || !this.routes.length) return;
     const top = this.routes.slice(0, 15);
+    const fullLabels = top.map(r => r.route);
     const chart = new Chart(this.timeChartRef.nativeElement, {
       type: 'bar',
       data: {
-        labels: top.map(r => r.route.length > 35 ? '...' + r.route.slice(-32) : r.route),
+        labels: top.map(r => { const s = r.route.replace(/^\/business-loans\//, '/'); return s.length > 20 ? '...' + s.slice(-17) : s; }),
         datasets: [{
           label: 'Total Time (s)',
           data: top.map(r => Math.round(r.totalTime)),
@@ -287,22 +288,25 @@ export class RouteAnalyticsComponent implements OnInit, OnDestroy {
           x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
           y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
-        plugins: { legend: { display: false } }
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { title: (items: any) => { const i = items[0]?.dataIndex; return i != null ? fullLabels[i] : ''; } } } }
       }
     });
+    (chart as any).__fullLabels = fullLabels;
     this.charts.push(chart);
   }
 
   private buildVisitsChart(): void {
     if (!this.visitsChartRef?.nativeElement || !this.routes.length) return;
     const sorted = [...this.routes].sort((a, b) => b.visits - a.visits).slice(0, 15);
+    const fullLabels = sorted.map(r => r.route);
     const colors = ['#6366f1', '#7c3aed', '#8b5cf6', '#a855f7', '#c084fc', '#d946ef', '#ec4899', '#f472b6',
       '#818cf8', '#a78bfa', '#c4b5fd', '#ddd6fe', '#60a5fa', '#93c5fd', '#34d399'];
 
     const chart = new Chart(this.visitsChartRef.nativeElement, {
       type: 'bar',
       data: {
-        labels: sorted.map(r => r.route.length > 35 ? '...' + r.route.slice(-32) : r.route),
+        labels: sorted.map(r => { const s = r.route.replace(/^\/business-loans\//, '/'); return s.length > 20 ? '...' + s.slice(-17) : s; }),
         datasets: [{
           label: 'Visits',
           data: sorted.map(r => r.visits),
@@ -320,9 +324,11 @@ export class RouteAnalyticsComponent implements OnInit, OnDestroy {
           x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
           y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
-        plugins: { legend: { display: false } }
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { title: (items: any) => { const i = items[0]?.dataIndex; return i != null ? fullLabels[i] : ''; } } } }
       }
     });
+    (chart as any).__fullLabels = fullLabels;
     this.charts.push(chart);
   }
 }

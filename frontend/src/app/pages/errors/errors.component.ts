@@ -416,10 +416,11 @@ export class ErrorsComponent implements OnInit, OnDestroy {
     const sorted = Array.from(pageMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
     if (!sorted.length) return;
 
+    const fullPages = sorted.map(([p]) => p);
     const chart = new Chart(this.errorsByPageRef.nativeElement, {
       type: 'bar',
       data: {
-        labels: sorted.map(([p]) => p.length > 30 ? '...' + p.slice(-27) : p),
+        labels: sorted.map(([p]) => { const s = p.replace(/^\/business-loans\//, '/'); return s.length > 20 ? '...' + s.slice(-17) : s; }),
         datasets: [{
           label: 'Errors',
           data: sorted.map(([, c]) => c),
@@ -440,9 +441,11 @@ export class ErrorsComponent implements OnInit, OnDestroy {
           x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
           y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
-        plugins: { legend: { display: false } }
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { title: (items: any) => { const i = items[0]?.dataIndex; return i != null ? fullPages[i] : ''; } } } }
       }
     });
+    (chart as any).__fullLabels = fullPages;
     this.charts.push(chart);
   }
 
@@ -456,10 +459,11 @@ export class ErrorsComponent implements OnInit, OnDestroy {
     const sorted = Array.from(pageMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
     if (!sorted.length) return;
 
+    const fullPages = sorted.map(([p]) => p);
     const chart = new Chart(this.errorsByPageRef.nativeElement, {
       type: 'bar',
       data: {
-        labels: sorted.map(([p]) => p.length > 30 ? '...' + p.slice(-27) : p),
+        labels: sorted.map(([p]) => { const s = p.replace(/^\/business-loans\//, '/'); return s.length > 20 ? '...' + s.slice(-17) : s; }),
         datasets: [{
           label: 'Errors',
           data: sorted.map(([, c]) => c),
@@ -480,9 +484,11 @@ export class ErrorsComponent implements OnInit, OnDestroy {
           x: { grid: { color: '#f3f4f6' }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } },
           y: { grid: { display: false }, ticks: { color: '#111827', font: { family: 'Inter', size: 13 } } }
         },
-        plugins: { legend: { display: false } }
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { title: (items: any) => { const i = items[0]?.dataIndex; return i != null ? fullPages[i] : ''; } } } }
       }
     });
+    (chart as any).__fullLabels = fullPages;
     this.charts.push(chart);
   }
 
@@ -491,6 +497,7 @@ export class ErrorsComponent implements OnInit, OnDestroy {
     const top = this.errorGroups.slice(0, 8);
     const colors = ['#f87171', '#fb923c', '#fbbf24', '#a78bfa', '#818cf8', '#60a5fa', '#34d399', '#f472b6'];
 
+    const fullMsgs = top.map(g => g.message);
     const chart = new Chart(this.errorDistRef.nativeElement, {
       type: 'doughnut',
       data: {
@@ -511,6 +518,7 @@ export class ErrorsComponent implements OnInit, OnDestroy {
         }
       }
     });
+    (chart as any).__fullLabels = fullMsgs;
     this.charts.push(chart);
   }
 }

@@ -56,12 +56,7 @@ interface ChatMsg { role: 'user'|'assistant'; content: string; ts: Date; }
             <span class="app-topbar__divider"></span>
             <span class="app-topbar__hint">Product telemetry dashboard</span>
           </div>
-          <div class="app-topbar__right">
-            <div class="tenant-badge" *ngIf="tenantName">
-              <span class="material-symbols-outlined" style="font-size:16px">apartment</span>
-              <span>{{ tenantName }}</span>
-            </div>
-          </div>
+          <div class="app-topbar__right"></div>
         </header>
         <main class="content">
           <router-outlet></router-outlet>
@@ -116,12 +111,7 @@ interface ChatMsg { role: 'user'|'assistant'; content: string; ts: Date; }
     </div>
   `,
   styles: [`
-    .tenant-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 16px; border-radius: 999px;
-      background: var(--accent-soft); border: 1px solid var(--border-accent);
-      color: var(--accent); font-size: 13px; font-weight: 600;
-    }
+
     .chat-fab {
       position: fixed; bottom: 24px; right: 24px; z-index: 100;
       width: 52px; height: 52px; border-radius: 16px; border: none;
@@ -206,7 +196,7 @@ export class AppComponent {
   loading = false;
   q = '';
   msgs: ChatMsg[] = [];
-  tenantName = '';
+
   suggestions = [
     'Which page do users spend the most time on?',
     'What is the error rate today?',
@@ -217,18 +207,7 @@ export class AppComponent {
 
   ask(s: string) { this.q = s; this.send(); }
 
-  ngOnInit() {
-    this.api.getRecentEvents(10).subscribe({
-      next: (res) => {
-        const events = res?.events || [];
-        for (const e of events) {
-          const t = e.metadata?._ctx?.tenant;
-          if (t) { this.tenantName = t.charAt(0).toUpperCase() + t.slice(1); break; }
-        }
-      },
-      error: () => {}
-    });
-  }
+
 
   send() {
     const text = this.q.trim();
